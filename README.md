@@ -1,6 +1,6 @@
 # Quiz Campus 🎓
 
-**Quiz Campus** is a full-stack web development project developed as part of our 6th semester Mini Project in the 3rd year B.Tech curriculum. It is an online examination platform designed for both students and faculty to simplify and streamline the examination process.
+**Quiz Campus** is a full-stack web development project developed as part of our 6th semester Mini Project in the 3rd year B.Tech curriculum at Techno India University. It is an online examination platform designed for both students and faculty to simplify and streamline the examination process.
 
 ## 🔍 Features
 
