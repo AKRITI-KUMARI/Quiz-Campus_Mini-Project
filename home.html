@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Campus - Test Your Knowledge!</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <!-- Firebase UI CSS -->
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="logo-icon.svg" alt="Quiz Campus Icon" class="logo-icon">
+                Quiz Campus
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+                <div class="auth-buttons" id="auth-buttons-container">
+                    <!-- Dynamic content will be inserted here -->
+                    <a href="login.html" class="btn btn-secondary">Login</a>
+                    <a href="signup.html" class="btn btn-primary">Sign Up</a>
+                </div>
+            </nav>
+            <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container hero-content">
+                <div class="hero-text">
+                    <h1>Welcome to Quiz Campus</h1>
+                    <p>Test your knowledge with fun, interactive quizzes!</p>
+                    <a href="#" class="btn btn-cta" id="start-quiz-btn">Start Quiz Now</a>
+                </div>
+                <div class="hero-image">
+                    <img src="index-banner.svg" alt="Students learning with quizzes">
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2></h2>
+                <div class="features-grid">
+                    <!-- ... (keep all feature cards as is) ... -->
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container">
+                <h2>About Quiz Campus</h2>
+                <p>Quiz Campus is dedicated to making learning fun and accessible for everyone. Our platform offers a diverse range of quizzes designed to challenge and educate. Join our community of learners and start your knowledge journey today!</p>
+                <img src="brain-banner.svg" alt="Diverse group of students learning" class="about-illustration">
+            </div>
+        </section>
+    </main>
+
+    <footer id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="social-media">
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+                <div class="quick-links">
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Help Center</a>
+                </div>
+            </div>
+            <p class="copyright">© 2025 Quiz Campus. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVoAPVlJfQt_Au4iKd0oQwpMKfQRRAIdg",
+            authDomain: "quiz-campus.firebaseapp.com",
+            projectId: "quiz-campus",
+            storageBucket: "quiz-campus.firebasestorage.app",
+            messagingSenderId: "877302322545",
+            appId: "1:877302322545:web:0ade17da05393c942752d0"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Auth state listener
+        onAuthStateChanged(auth, (user) => {
+            const authButtons = document.getElementById('auth-buttons-container');
+            
+            if (user) {
+                // User is signed in
+                authButtons.innerHTML = `
+                    <span class="welcome-msg">Hi, ${user.email.split('@')[0]}!</span>
+                    <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
+                    <a href="#" class="btn btn-secondary" id="logout-btn">Logout</a>
+                `;
+                
+                document.getElementById('logout-btn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    signOut(auth);
+                });
+            }
+            // If not signed in, keeps default buttons
+        });
+
+        // Start Quiz button handler
+        document.getElementById('start-quiz-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (auth.currentUser) {
+                window.location.href = "quizzes.html";
+            } else {
+                window.location.href = "login.html?redirect=quizzes";
+            }
+        });
+    </script>
+
+    <!-- Your existing script.js -->
+    <script src="script.js"></script>
+</body>
+</html>

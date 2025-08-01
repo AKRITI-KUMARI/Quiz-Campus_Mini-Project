@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard - Quiz Campus</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="logo-icon.svg" alt="Quiz Campus Icon" class="logo-icon">
+        Quiz Campus
+      </a>
+      <nav>
+        <ul class="nav-links">
+          <li><a href="home.html">Home</a></li>
+          <li><a href="student-quiz.html">Quizzes</a></li>
+          <li><a href="dashboard.html" class="active">Dashboard</a></li>
+        </ul>
+        <div class="auth-buttons" id="auth-buttons-container">
+          <span id="user-greeting" style="margin-right: 15px; color: var(--text-light);"></span>
+          <button id="logout-btn" class="btn btn-secondary">Logout</button>
+        </div>
+      </nav>
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="dashboard-container">
+      <div class="container">
+        <div class="dashboard-welcome" id="welcome-message">
+          <div class="loading-placeholder">
+            <i class="fas fa-spinner fa-spin"></i> Loading your dashboard...
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <h3><i class="fas fa-history"></i> Recent Activity</h3>
+            <div id="recent-activity">
+              <div class="loading-placeholder">
+                <i class="fas fa-spinner fa-spin"></i> Loading activity...
+              </div>
+            </div>
+            <a href="student-quiz.html" class="btn btn-secondary">Take a New Quiz</a>
+          </div>
+
+          <div class="dashboard-card">
+            <h3><i class="fas fa-medal"></i> My Badges</h3>
+            <div id="user-badges">
+              <div class="loading-placeholder">
+                <i class="fas fa-spinner fa-spin"></i> Loading badges...
+              </div>
+            </div>
+            <p style="font-size:0.9rem; color: var(--text-light); margin-top:10px;">Keep quizzing to earn more!</p>
+          </div>
+
+          <div class="dashboard-card">
+            <h3><i class="fas fa-chart-bar"></i> Overall Stats</h3>
+            <ul id="user-stats">
+              <li>Quizzes Taken: <span class="stats-value">0</span></li>
+              <li>Correct Answers: <span class="stats-value">0</span>/<span class="stats-value">0</span></li>
+              <li>Accuracy: <span class="stats-value">0%</span></li>
+              <li>Current Streak: <span class="stats-value">0 days</span></li>
+            </ul>
+          </div>
+
+          <div class="dashboard-card">
+            <h3><i class="fas fa-user-cog"></i> Account</h3>
+            <ul class="account-details" id="account-details">
+              <li>Email: <span id="user-email">Loading...</span></li>
+              <li>Member Since: <span id="join-date">Loading...</span></li>
+              <li>Last Login: <span id="last-login">Loading...</span></li>
+            </ul>
+            <div class="btn-group">
+              <a href="profile.html" class="btn btn-secondary">Edit Profile</a>
+              <button id="change-password" class="btn btn-secondary">Change Password</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact">
+    <div class="container">
+      <div class="footer-content">
+        <div class="social-media">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <div class="quick-links">
+          <a href="#">Terms of Service</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Help Center</a>
+        </div>
+      </div>
+      <p class="copyright">© 2025 Quiz Campus. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBVoAPVlJfQt_Au4iKd0oQwpMKfQRRAIdg",
+      authDomain: "quiz-campus.firebaseapp.com",
+      projectId: "quiz-campus",
+      storageBucket: "quiz-campus.firebasestorage.app",
+      messagingSenderId: "877302322545",
+      appId: "1:877302322545:web:0ade17da05393c942752d0"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const logoutBtn = document.getElementById('logout-btn');
+      const changePasswordBtn = document.getElementById('change-password');
+      const welcomeMessage = document.getElementById('welcome-message');
+      const userGreeting = document.getElementById('user-greeting');
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) return (window.location.href = 'login.html?redirect=dashboard.html');
+
+        const userDocRef = db.collection('users').doc(user.uid);
+        userDocRef.onSnapshot((doc) => {
+          const data = doc.data();
+          const stats = data.stats || {};
+          const accuracy = stats.totalQuestions > 0 ? Math.round((stats.correctAnswers / stats.totalQuestions) * 100) : 0;
+
+          document.getElementById('user-email').textContent = user.email;
+          userGreeting.textContent = `Hi, ${data.fullName || user.email.split('@')[0]}!`;
+          welcomeMessage.innerHTML = `<h2>Welcome to Your Dashboard, ${data.fullName || user.email.split('@')[0]}!</h2>`;
+
+          document.getElementById('user-stats').innerHTML = `
+            <li>Quizzes Taken: <span class="stats-value">${stats.quizzesTaken || 0}</span></li>
+            <li>Correct Answers: <span class="stats-value">${stats.correctAnswers || 0}</span>/<span class="stats-value">${stats.totalQuestions || 0}</span></li>
+            <li>Accuracy: <span class="stats-value">${accuracy}%</span></li>
+            <li>Current Streak: <span class="stats-value">${stats.streak || 0} days</span></li>
+          `;
+
+          const activityContainer = document.getElementById('recent-activity');
+          activityContainer.innerHTML = (data.recentActivity || []).sort((a,b) => b.timestamp?.seconds - a.timestamp?.seconds).map(a => `
+            <div class="activity-item">
+              <div><strong>${a.action}</strong><div>${a.score || ''}</div></div>
+              <div class="activity-date">${a.timestamp?.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) || ''}</div>
+            </div>
+          `).join('') || `<p style="color: var(--text-light);">No recent activity yet.</p>`;
+
+          const badgeList = [
+            { name: "Rookie", icon: "star", condition: stats.quizzesTaken >= 1 },
+            { name: "Quiz Whiz", icon: "brain", condition: stats.quizzesTaken >= 5 },
+            { name: "Accuracy Ace", icon: "bullseye", condition: accuracy >= 80 },
+            { name: "Streak Master", icon: "fire", condition: stats.streak >= 3 }
+          ];
+
+          const existing = new Set((stats.badges || []).map(b => b.name));
+          const newBadges = badgeList.filter(b => b.condition && !existing.has(b.name));
+
+          if (newBadges.length > 0) {
+            db.collection('users').doc(user.uid).update({
+              'stats.badges': firebase.firestore.FieldValue.arrayUnion(...newBadges),
+              'lastActivityDate': firebase.firestore.Timestamp.fromDate(new Date())
+            });
+          }
+
+          const today = new Date();
+          const last = data.lastActivityDate?.toDate?.();
+          const sameDay = last && today.toDateString() === last.toDateString();
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          const continued = last && yesterday.toDateString() === last.toDateString();
+
+          if (!sameDay) {
+            const newStreak = continued ? (stats.streak || 0) + 1 : 1;
+            db.collection('users').doc(user.uid).update({
+              'stats.streak': newStreak,
+              'lastActivityDate': firebase.firestore.Timestamp.fromDate(today)
+            });
+          }
+
+          const badgeContainer = document.getElementById('user-badges');
+          if ((stats.badges || []).length > 0) {
+            badgeContainer.innerHTML = `
+              <div class="badge-grid">
+                ${stats.badges.map(b => `
+                  <div class="badge-item">
+                    <div class="badge-icon" title="${b.name}"><i class="fas fa-${b.icon || 'medal'}"></i></div>
+                    <div class="badge-name">${b.name}</div>
+                  </div>`).join('')}
+              </div>`;
+          } else {
+            badgeContainer.innerHTML = `<p style="color: var(--text-light);">No badges yet. Complete quizzes to earn some!</p>`;
+          }
+        });
+      });
+
+      logoutBtn.addEventListener('click', () => auth.signOut().then(() => window.location.href = 'index.html'));
+
+      changePasswordBtn.addEventListener('click', () => {
+        const newPassword = prompt("Enter your new password (min 8 characters):");
+        if (newPassword && newPassword.length >= 8) {
+          const user = auth.currentUser;
+          user.updatePassword(newPassword).then(() => alert("Password updated successfully!"))
+          .catch((error) => alert("Error updating password: " + error.message));
+        } else if (newPassword) {
+          alert("Password must be at least 8 characters long");
+        }
+      });
+    });
+  </script>
+</body>
+</html>

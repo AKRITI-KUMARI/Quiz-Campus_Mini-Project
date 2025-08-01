@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Quiz Code | Quiz Campus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-lg">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden mx-auto text-center">
+            <div class="p-6 border-b border-gray-200/80">
+                <h3 class="text-3xl font-bold text-gray-800">Enter Quiz Code</h3>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-600 mb-8">Enter the code provided by your teacher</p>
+                <form id="joinQuizForm" action="attempt-quiz.html" method="GET">
+                    <input id="quizCodeInput" name="code" type="text" placeholder="ENTER QUIZ CODE" required 
+                           class="w-full text-center tracking-widest font-mono text-2xl px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                           maxlength="6" style="text-transform: uppercase;">
+                    <p id="joinError" class="text-red-500 text-sm mt-2 hidden"></p>
+                    <button type="submit" class="mt-4 w-full px-8 py-3 font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700">
+                        Start Quiz
+                    </button>
+                </form>
+                <a href="dashboard.html" class="mt-4 inline-block text-sm font-medium text-blue-600 hover:underline">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Simple client-side validation
+        document.getElementById('joinQuizForm').addEventListener('submit', function(e) {
+            const code = document.getElementById('quizCodeInput').value.trim();
+            if(code.length !== 6) {
+                e.preventDefault();
+                document.getElementById('joinError').textContent = "Code must be 6 characters";
+                document.getElementById('joinError').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

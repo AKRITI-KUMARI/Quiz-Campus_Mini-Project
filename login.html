@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Quiz Campus</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <style>
+        /* Additional styles for enhanced UI */
+        .remember-me {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .remember-me input {
+            margin-right: 10px;
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .auth-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="logo-icon.svg" alt="Quiz Campus Icon" class="logo-icon">
+                Quiz Campus
+            </a>
+            <nav id="main-navigation">
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="quizzes.html">Quizzes</a></li>
+                </ul>
+                <div class="auth-buttons" id="auth-buttons-container">
+                    <a href="signup.html" class="btn btn-primary">Sign Up</a>
+                </div>
+            </nav>
+            <button class="mobile-nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <h2>Welcome Back!</h2>
+            <p class="subheading">Login to continue your learning journey</p>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" required placeholder="Enter your password">
+                        <span class="toggle-password" id="toggle-password">
+                            <i class="far fa-eye"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="auth-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+                    <a href="forgot-password.html" class="forgot-password">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn">
+                    <span class="btn-text">Login</span>
+                    <span class="loading-spinner" style="display:none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                </button>
+                <div id="error-message" class="error-message" style="display:none;"></div>
+                <div class="extra-links">
+                    <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+                </div>
+            </form>
+            
+            <!-- Social Login Options -->
+            <div class="social-login">
+                <p class="divider">or login with</p>
+                <div class="social-buttons">
+                    <button class="btn-social google" id="google-login">
+                        <i class="fab fa-google"></i> Google
+                    </button>
+                    <button class="btn-social facebook" id="facebook-login">
+                        <i class="fab fa-facebook-f"></i> Facebook
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="margin-top: 60px;">
+        <div class="container">
+            <div class="footer-content">
+                <div class="social-media">
+                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+                <div class="quick-links">
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Help Center</a>
+                </div>
+            </div>
+            <p class="copyright">© 2025 Quiz Campus. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+
+    <!-- Firebase Configuration -->
+    <script>
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVoAPVlJfQt_Au4iKd0oQwpMKfQRRAIdg",
+            authDomain: "quiz-campus.firebaseapp.com",
+            projectId: "quiz-campus",
+            storageBucket: "quiz-campus.firebasestorage.app",
+            messagingSenderId: "877302322545",
+            appId: "1:877302322545:web:0ade17da05393c942752d0",
+            measurementId: "G-XXXXXXXXXX"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const analytics = firebase.analytics();
+    </script>
+
+    <!-- Login Functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const googleLoginBtn = document.getElementById('google-login');
+            const facebookLoginBtn = document.getElementById('facebook-login');
+            const errorMessage = document.getElementById('error-message');
+            const togglePassword = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('password');
+            const rememberCheckbox = document.getElementById('remember');
+
+            // Handle redirect parameter from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectTo = urlParams.get('redirect') || 'dashboard.html';
+
+            // Toggle password visibility
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.innerHTML = type === 'password' ? '<i class="far fa-eye"></i>' : '<i class="far fa-eye-slash"></i>';
+            });
+
+            // Set persistence based on remember me checkbox
+            function setPersistence(remember) {
+                return auth.setPersistence(
+                    remember ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION
+                );
+            }
+
+            // Email/password login
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const rememberMe = rememberCheckbox.checked;
+
+                try {
+                    // Show loading state
+                    loginBtn.disabled = true;
+                    document.querySelector('.btn-text').style.display = 'none';
+                    document.querySelector('.loading-spinner').style.display = 'inline-block';
+
+                    // Set session persistence
+                    await setPersistence(rememberMe);
+                    
+                    // Login user
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    
+                    // Check if user document exists
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    
+                    if (!userDoc.exists) {
+                        // Create user document if it doesn't exist (legacy users)
+                        await db.collection('users').doc(user.uid).set({
+                            fullName: user.displayName || email.split('@')[0],
+                            email: user.email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            stats: {
+                                quizzesTaken: 0,
+                                correctAnswers: 0,
+                                totalQuestions: 0,
+                                badges: [],
+                                streak: 0
+                            },
+                            recentActivity: [],
+                            preferences: {
+                                theme: 'light',
+                                notifications: true
+                            },
+                            accountType: 'free'
+                        });
+                    } else {
+                        // Update last login timestamp
+                        await db.collection('users').doc(user.uid).update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+
+                    // Log login event
+                    analytics.logEvent('login', {
+                        method: 'email'
+                    });
+
+                    // Redirect
+                    window.location.href = redirectTo;
+                } catch (error) {
+                    handleAuthError(error);
+                } finally {
+                    // Reset button state
+                    loginBtn.disabled = false;
+                    document.querySelector('.btn-text').style.display = 'inline-block';
+                    document.querySelector('.loading-spinner').style.display = 'none';
+                }
+            });
+
+            // Google login
+            googleLoginBtn.addEventListener('click', async () => {
+                try {
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    await setPersistence(rememberCheckbox.checked);
+                    const result = await auth.signInWithPopup(provider);
+                    
+                    // Check if user is new
+                    if (result.additionalUserInfo.isNewUser) {
+                        await db.collection('users').doc(result.user.uid).set({
+                            fullName: result.user.displayName,
+                            email: result.user.email,
+                            photoURL: result.user.photoURL,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            stats: {
+                                quizzesTaken: 0,
+                                correctAnswers: 0,
+                                totalQuestions: 0,
+                                badges: [],
+                                streak: 0
+                            },
+                            recentActivity: [],
+                            preferences: {
+                                theme: 'light',
+                                notifications: true
+                            },
+                            accountType: 'free'
+                        });
+
+                        // Log signup event
+                        analytics.logEvent('sign_up', {
+                            method: 'google'
+                        });
+                    } else {
+                        // Update last login for existing users
+                        await db.collection('users').doc(result.user.uid).update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        // Log login event
+                        analytics.logEvent('login', {
+                            method: 'google'
+                        });
+                    }
+                    
+                    window.location.href = redirectTo;
+                } catch (error) {
+                    handleAuthError(error);
+                }
+            });
+
+            // Facebook login
+            facebookLoginBtn.addEventListener('click', async () => {
+                try {
+                    const provider = new firebase.auth.FacebookAuthProvider();
+                    provider.addScope('email');
+                    await setPersistence(rememberCheckbox.checked);
+                    const result = await auth.signInWithPopup(provider);
+                    
+                    // Check if user is new
+                    if (result.additionalUserInfo.isNewUser) {
+                        await db.collection('users').doc(result.user.uid).set({
+                            fullName: result.user.displayName,
+                            email: result.user.email,
+                            photoURL: result.user.photoURL,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            stats: {
+                                quizzesTaken: 0,
+                                correctAnswers: 0,
+                                totalQuestions: 0,
+                                badges: [],
+                                streak: 0
+                            },
+                            recentActivity: [],
+                            preferences: {
+                                theme: 'light',
+                                notifications: true
+                            },
+                            accountType: 'free'
+                        });
+
+                        // Log signup event
+                        analytics.logEvent('sign_up', {
+                            method: 'facebook'
+                        });
+                    } else {
+                        // Update last login for existing users
+                        await db.collection('users').doc(result.user.uid).update({
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+
+                        // Log login event
+                        analytics.logEvent('login', {
+                            method: 'facebook'
+                        });
+                    }
+                    
+                    window.location.href = redirectTo;
+                } catch (error) {
+                    handleAuthError(error);
+                }
+            });
+
+            // Error handling
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                setTimeout(() => {
+                    errorMessage.style.display = 'none';
+                }, 5000);
+            }
+
+            function handleAuthError(error) {
+                console.error(error);
+                let message = 'Login failed. ';
+                
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        message += 'No account found with this email.';
+                        break;
+                    case 'auth/wrong-password':
+                        message += 'Incorrect password.';
+                        break;
+                    case 'auth/invalid-email':
+                        message += 'Invalid email address.';
+                        break;
+                    case 'auth/user-disabled':
+                        message += 'This account has been disabled.';
+                        break;
+                    case 'auth/popup-closed-by-user':
+                        message = 'Sign in popup was closed. Please try again.';
+                        break;
+                    case 'auth/account-exists-with-different-credential':
+                        message = 'An account already exists with the same email but different sign-in credentials.';
+                        break;
+                    case 'auth/auth-domain-config-required':
+                        message = 'Authentication domain configuration required.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        message = 'This operation is not allowed.';
+                        break;
+                    case 'auth/operation-not-supported-in-this-environment':
+                        message = 'This operation is not supported in this environment.';
+                        break;
+                    default:
+                        message += 'Please try again later.';
+                }
+                
+                showError(message);
+            }
+        });
+    </script>
+</body>
+</html>

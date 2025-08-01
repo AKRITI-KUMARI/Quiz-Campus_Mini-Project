@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - Quiz Campus</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="logo-icon.svg" alt="Quiz Campus Icon" class="logo-icon">
+        Quiz Campus
+      </a>
+      <nav id="main-navigation">
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="quizzes.html">Quizzes</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+          <li><a href="profile-view.html" class="active">Profile</a></li>
+        </ul>
+        <div class="auth-buttons">
+          <span class="user-greeting" id="user-greeting">Hi!</span>
+          <a href="#" class="btn btn-secondary" onclick="logout()">Logout</a>
+        </div>
+      </nav>
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-navigation">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="page-header">
+      <div class="container">
+        <h1>Account Overview</h1>
+        <p>Your personal information and account settings.</p>
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <div class="container">
+        <div class="profile-layout">
+          <aside class="profile-sidebar">
+            <nav class="profile-subnav">
+              <ul>
+                <li><a href="profile-view.html" class="active"><i class="fas fa-user-circle"></i> Profile Overview</a></li>
+                <li><a href="profile-edit.html"><i class="fas fa-edit"></i> Edit Profile</a></li>
+                <li><a href="profile-password.html"><i class="fas fa-key"></i> Change Password</a></li>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> My Dashboard</a></li>
+              </ul>
+            </nav>
+          </aside>
+
+          <div class="profile-content">
+            <div class="profile-card">
+              <div class="profile-avatar-section">
+                <img src="avatar-placeholder.png" alt="User Avatar" class="profile-avatar">
+              </div>
+              <h2 id="profile-name">User Name</h2>
+              <div class="profile-info-grid">
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-envelope"></i> Email:</span>
+                  <span class="info-value" id="profile-email">Loading...</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-user"></i> Username:</span>
+                  <span class="info-value" id="profile-username">Loading...</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-calendar-alt"></i> Member Since:</span>
+                  <span class="info-value" id="profile-join-date">Loading...</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label"><i class="fas fa-align-left"></i> Bio:</span>
+                  <span class="info-value" id="profile-bio">Loading...</span>
+                </div>
+              </div>
+              <div class="profile-actions">
+                <a href="profile-edit.html" class="btn btn-primary"><i class="fas fa-pencil-alt"></i> Edit My Profile</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contact" style="margin-top: 60px;">
+    <div class="container">
+      <div class="footer-content">
+        <div class="social-media">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <div class="quick-links">
+          <a href="#">Terms of Service</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Help Center</a>
+        </div>
+      </div>
+      <p class="copyright">© 2025 Quiz Campus. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "quiz-campus.firebaseapp.com",
+      projectId: "quiz-campus",
+      storageBucket: "quiz-campus.appspot.com",
+      messagingSenderId: "877302322545",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("user-greeting").textContent = `Hi, ${user.displayName || 'User'}!`;
+        db.collection("users").doc(user.uid).get().then(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            document.getElementById("profile-name").textContent = data.fullName || "Name";
+            document.getElementById("profile-email").textContent = data.email || user.email;
+            document.getElementById("profile-username").textContent = data.username || "Not set";
+            document.getElementById("profile-bio").textContent = data.bio || "No bio available.";
+            const joinDate = data.joined ? new Date(data.joined.seconds * 1000).toDateString() : "Not available";
+            document.getElementById("profile-join-date").textContent = joinDate;
+          }
+        });
+      } else {
+        window.location.href = "login.html";
+      }
+    });
+
+    function logout() {
+      auth.signOut().then(() => window.location.href = "index.html");
+    }
+  </script>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quiz | Quiz Campus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-4xl">
+        <!-- Create Quiz Form -->
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden w-full max-w-4xl mx-auto">
+            <div class="p-6 border-b border-gray-200/80 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-gray-800">Create Your Quiz</h3>
+                <a href="index.html" class="text-sm font-medium text-blue-600 hover:underline">Back to Home</a>
+            </div>
+            <form id="createQuizForm">
+                <div class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1">
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Quiz Title*</label>
+                            <input id="title" type="text" placeholder="World Capitals" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="md:col-span-1">
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Category*</label>
+                            <input id="category" type="text" placeholder="Geography" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div class="md:col-span-1">
+                            <label for="timer" class="block text-sm font-medium text-gray-700 mb-2">Time Limit (Minutes)</label>
+                            <input id="timer" type="number" min="0" value="10" placeholder="0 for no limit" required 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="border-t border-gray-200/80 pt-6">
+                        <h4 class="text-xl font-bold text-gray-800 mb-4">Questions</h4>
+                        <div id="questions-container"></div>
+                        <button type="button" onclick="addQuestion()" class="mt-4 flex items-center justify-center px-8 py-3 font-semibold rounded-lg shadow-md bg-gray-200 text-gray-800 hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block w-5 h-5 mr-2">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="16" />
+                                <line x1="8" y1="12" x2="16" y2="12" />
+                            </svg>
+                            Add Question
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6 bg-gray-50/70 border-t border-gray-200/80 text-right">
+                    <button type="submit" id="submitBtn" class="px-8 py-3 font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50">
+                        <span id="btnText">Save Quiz & Get Code</span>
+                        <span id="spinner" class="hidden ml-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md m-4 p-6 text-center">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Quiz Created Successfully!</h3>
+            <p class="text-gray-600 mb-2">Share this code with your students:</p>
+            <div id="generated-code" class="bg-gray-100 text-3xl font-bold tracking-widest p-4 rounded-lg mb-4 font-mono">ABC123</div>
+            <div class="bg-blue-50 p-3 rounded-lg mb-4">
+                <p class="text-sm text-blue-700">Students can enter this code at <span class="font-bold">quiz-campus.firebaseapp.com</span></p>
+            </div>
+            <button onclick="closeModal()" class="px-8 py-3 font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700">
+                Done
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase with your config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVoAPVlJfQt_Au4iKd0oQwpMKfQRRAIdg",
+            authDomain: "quiz-campus.firebaseapp.com",
+            projectId: "quiz-campus",
+            storageBucket: "quiz-campus.firebasestorage.app",
+            messagingSenderId: "877302322545",
+            appId: "1:877302322545:web:7b5156f3ff11e2452752d0"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Check authentication state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "login.html?redirect=create-quiz.html";
+            }
+        });
+
+        let questionCounter = 0;
+
+        // Quiz Creation Functions
+        function updateCorrectAnswerOptions(questionId) {
+            const questionBlock = document.getElementById(`question-block-${questionId}`);
+            if (!questionBlock) return;
+            
+            const selectElement = questionBlock.querySelector(`#correct-answer-${questionId}`);
+            const optionInputs = Array.from(questionBlock.querySelectorAll('input[type="text"]')).slice(1);
+            const currentSelectedValue = selectElement.value;
+            
+            selectElement.innerHTML = '<option value="" disabled>Select the correct option</option>';
+            
+            optionInputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    const option = document.createElement('option');
+                    option.value = input.value;
+                    option.textContent = input.value;
+                    selectElement.appendChild(option);
+                }
+            });
+            
+            selectElement.value = currentSelectedValue;
+        }
+
+        function addQuestion() {
+            questionCounter++;
+            const questionsContainer = document.getElementById('questions-container');
+            const newQuestionHTML = `
+                <div class="bg-gray-50 p-6 rounded-lg mb-6 border relative" id="question-block-${questionCounter}">
+                    <h5 class="font-bold text-lg mb-4">Question ${questionCounter}</h5>
+                    ${questionCounter > 1 ? '<button type="button" onclick="removeQuestion(this)" class="absolute top-4 right-4 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">&times;</button>' : ''}
+                    <div class="space-y-2 mb-4">
+                        <label for="question-text-${questionCounter}" class="block text-sm font-medium text-gray-700">Question Text*</label>
+                        <input id="question-text-${questionCounter}" type="text" placeholder="What is the capital of France?" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="q${questionCounter}-opt1" class="block text-sm font-medium text-gray-700">Option 1*</label>
+                            <input oninput="updateCorrectAnswerOptions(${questionCounter})" id="q${questionCounter}-opt1" type="text" placeholder="Paris" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="q${questionCounter}-opt2" class="block text-sm font-medium text-gray-700">Option 2*</label>
+                            <input oninput="updateCorrectAnswerOptions(${questionCounter})" id="q${questionCounter}-opt2" type="text" placeholder="London" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="q${questionCounter}-opt3" class="block text-sm font-medium text-gray-700">Option 3</label>
+                            <input oninput="updateCorrectAnswerOptions(${questionCounter})" id="q${questionCounter}-opt3" type="text" placeholder="Berlin" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="q${questionCounter}-opt4" class="block text-sm font-medium text-gray-700">Option 4</label>
+                            <input oninput="updateCorrectAnswerOptions(${questionCounter})" id="q${questionCounter}-opt4" type="text" placeholder="Madrid" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label for="correct-answer-${questionCounter}" class="block text-sm font-medium text-gray-700">Correct Answer*</label>
+                        <select id="correct-answer-${questionCounter}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                            <option value="" disabled selected>Select the correct option</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            questionsContainer.insertAdjacentHTML('beforeend', newQuestionHTML);
+        }
+
+        function removeQuestion(button) {
+            button.closest('.bg-gray-50').remove();
+            questionCounter--;
+        }
+
+        function generateQuizCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        function validateForm() {
+            // Check at least 1 question exists
+            if (questionCounter === 0) {
+                alert("Please add at least one question!");
+                return false;
+            }
+
+            // Validate all required fields
+            const requiredInputs = document.querySelectorAll('[required]');
+            for (const input of requiredInputs) {
+                if (!input.value.trim()) {
+                    alert(`Please fill in all required fields (marked with *)`);
+                    input.focus();
+                    return false;
+                }
+            }
+
+            // Validate correct answers are selected
+            for (let i = 1; i <= questionCounter; i++) {
+                const correctAnswer = document.getElementById(`correct-answer-${i}`);
+                if (!correctAnswer || !correctAnswer.value) {
+                    alert(`Please select the correct answer for Question ${i}`);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        document.getElementById('createQuizForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            if (!validateForm()) return;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            btnText.textContent = "Saving Quiz...";
+            spinner.classList.remove('hidden');
+
+            try {
+                const user = auth.currentUser;
+                if (!user) throw new Error("Not authenticated");
+
+                const quizCode = generateQuizCode();
+                const questions = [];
+                const questionBlocks = document.querySelectorAll('#questions-container > div');
+                
+                questionBlocks.forEach((block, index) => {
+                    const questionText = block.querySelector(`#question-text-${index + 1}`).value;
+                    const options = Array.from(block.querySelectorAll('input[type="text"]'))
+                                      .slice(1)
+                                      .map(input => input.value)
+                                      .filter(opt => opt.trim() !== '');
+                    const correctAnswer = block.querySelector(`#correct-answer-${index + 1}`).value;
+                    
+                    questions.push({ 
+                        questionText, 
+                        options, 
+                        correctAnswer 
+                    });
+                });
+
+                // Save to Firestore
+                await db.collection("quizzes").doc(quizCode).set({
+                    title: document.getElementById('title').value.trim(),
+                    category: document.getElementById('category').value.trim(),
+                    timer: parseInt(document.getElementById('timer').value, 10),
+                    questions: questions,
+                    createdBy: user.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Show success modal
+                document.getElementById('generated-code').textContent = quizCode;
+                document.getElementById('success-modal').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error("Save error:", error);
+                alert(`Failed to save quiz: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                btnText.textContent = "Save Quiz & Get Code";
+                spinner.classList.add('hidden');
+            }
+        });
+
+        function closeModal() {
+            document.getElementById('success-modal').classList.add('hidden');
+            // Optional: Reset form after successful save
+            // document.getElementById('createQuizForm').reset();
+            // document.getElementById('questions-container').innerHTML = '';
+            // questionCounter = 0;
+            // addQuestion(); // Start with one fresh question
+        }
+
+        // Initialize first question on load
+        document.addEventListener('DOMContentLoaded', function() {
+            addQuestion();
+        });
+    </script>
+</body>
+</html>

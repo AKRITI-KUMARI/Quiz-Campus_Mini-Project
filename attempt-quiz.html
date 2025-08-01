@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attempt Quiz | Quiz Campus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-2xl">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="takeQuizTitle" class="text-xl font-bold">Quiz Title</h3>
+                <div id="timer-display" class="text-lg font-semibold bg-red-100 text-red-700 px-3 py-1 rounded-full"></div>
+            </div>
+            <div class="p-6">
+                <div id="quiz-content"></div>
+                <div class="mt-8 flex justify-end">
+                    <button id="nextQuestionBtn" class="px-8 py-3 font-semibold rounded-lg shadow-md bg-blue-600 text-white hover:bg-blue-700">
+                        <span id="btnText">Next</span>
+                        <span id="spinner" class="hidden ml-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBVoAPVlJfQt_Au4iKd0oQwpMKfQRRAIdg",
+            authDomain: "quiz-campus.firebaseapp.com",
+            projectId: "quiz-campus",
+            storageBucket: "quiz-campus.firebasestorage.app",
+            messagingSenderId: "877302322545",
+            appId: "1:877302322545:web:7b5156f3ff11e2452752d0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const quizCode = urlParams.get('code');
+        let currentQuizData = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let score = 0;
+        let timerInterval = null;
+
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "login.html?redirect=attempt-quiz.html?code=" + quizCode;
+            } else {
+                loadQuiz();
+            }
+        });
+
+        function loadQuiz() {
+            document.getElementById('btnText').textContent = "Loading...";
+            document.getElementById('spinner').classList.remove('hidden');
+
+            db.collection("quizzes").doc(quizCode).get().then(doc => {
+                if(doc.exists) {
+                    currentQuizData = doc.data();
+                    document.getElementById('takeQuizTitle').textContent = currentQuizData.title;
+                    displayQuestion();
+                    startTimer();
+                } else {
+                    alert("Invalid quiz code!");
+                    window.location.href = "student-quiz.html";
+                }
+            }).catch(error => {
+                console.error("Error loading quiz:", error);
+                alert("Failed to load quiz. Please try again.");
+            }).finally(() => {
+                document.getElementById('btnText').textContent = "Next";
+                document.getElementById('spinner').classList.add('hidden');
+            });
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            const timerDisplay = document.getElementById('timer-display');
+            if (currentQuizData.timer > 0) {
+                let timeLeft = currentQuizData.timer * 60;
+                timerDisplay.style.display = 'block';
+
+                timerInterval = setInterval(() => {
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        submitQuiz();
+                    }
+                    timeLeft--;
+                }, 1000);
+            } else {
+                timerDisplay.style.display = 'none';
+            }
+        }
+
+        function displayQuestion() {
+            const question = currentQuizData.questions[currentQuestionIndex];
+            const quizContent = document.getElementById('quiz-content');
+
+            let optionsHTML = question.options.map(opt => 
+                `<button class="w-full text-left p-4 border rounded-lg hover:bg-gray-100 mb-2 transition-colors">${opt}</button>`
+            ).join('');
+
+            quizContent.innerHTML = `
+                <div class="mb-2 text-sm text-gray-500">Question ${currentQuestionIndex + 1} of ${currentQuizData.questions.length}</div>
+                <h4 class="text-2xl font-semibold text-center mb-8">${question.questionText}</h4>
+                <div class="grid grid-cols-1 gap-2">
+                    ${optionsHTML}
+                </div>
+            `;
+
+            quizContent.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    quizContent.querySelectorAll('button').forEach(b => {
+                        b.classList.remove('bg-blue-200', 'border-blue-400');
+                    });
+                    e.target.classList.add('bg-blue-200', 'border-blue-400');
+                    userAnswers[currentQuestionIndex] = e.target.textContent;
+                });
+            });
+
+            document.getElementById('btnText').textContent = 
+                currentQuestionIndex === currentQuizData.questions.length - 1 ? 'Submit' : 'Next';
+        }
+
+        async function submitQuiz() {
+            clearInterval(timerInterval);
+            score = currentQuizData.questions.reduce((acc, q, i) => {
+                return acc + (q.correctAnswer === userAnswers[i] ? 1 : 0);
+            }, 0);
+
+            document.getElementById('nextQuestionBtn').disabled = true;
+            document.getElementById('btnText').textContent = "Processing...";
+            document.getElementById('spinner').classList.remove('hidden');
+
+            try {
+                const user = auth.currentUser;
+                if (user) {
+                    const userRef = db.collection("users").doc(user.uid);
+                    await userRef.set({
+                        stats: {
+                            quizzesTaken: firebase.firestore.FieldValue.increment(1),
+                            correctAnswers: firebase.firestore.FieldValue.increment(score),
+                            totalQuestions: firebase.firestore.FieldValue.increment(currentQuizData.questions.length)
+                        },
+                        recentActivity: firebase.firestore.FieldValue.arrayUnion({
+                            action: `Completed ${currentQuizData.title}`,
+                            score: `${score}/${currentQuizData.questions.length}`,
+                            quizCode: quizCode,
+                            timestamp: firebase.firestore.Timestamp.now()
+                        }),
+                        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+
+                window.location.href = `quiz-results.html?score=${score}&total=${currentQuizData.questions.length}&quizId=${quizCode}`;
+            } catch (error) {
+                console.error("Quiz submission failed:", error);
+                alert("Something went wrong while submitting. Please try again.");
+            }
+        }
+
+        document.getElementById('nextQuestionBtn').addEventListener('click', () => {
+            if (!userAnswers[currentQuestionIndex]) {
+                alert('Please select an answer before continuing!');
+                return;
+            }
+
+            if (currentQuestionIndex < currentQuizData.questions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                submitQuiz();
+            }
+        });
+    </script>
+</body>
+</html>
